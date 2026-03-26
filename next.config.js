@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // 移除 output: 'export' 以支持 NextAuth API 路由
+  // 如果需要静态部署，需使用 @cloudflare/next-on-pages
   images: {
     unoptimized: true,
   },
-  // 静态导出需要禁用 Next.js 的一些功能
+  // Cloudflare Pages 需要
   trailingSlash: true,
 }
 
