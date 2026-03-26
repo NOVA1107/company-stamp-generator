@@ -1,29 +1,3 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-
-export const runtime = 'edge';
-
-const authOptions: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-  ],
-  callbacks: {
-    async session({ session, token }) {
-      if (session.user) {
-        // 将用户 ID 添加到 session 中
-        (session.user as any).id = token.sub;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/", // 使用自定义登录页面
-  },
-};
-
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
+import { handlers } from "@/auth"
+export const { GET, POST } = handlers
+export const runtime = "edge"
