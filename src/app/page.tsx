@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 type StampStyle = "circle" | "square" | "ellipse" | "star";
 
@@ -25,6 +26,7 @@ interface StampPosition {
 }
 
 export default function Home() {
+  const { data: session } = useSession();
   const [config, setConfig] = useState<StampConfig>({
     companyName: "示例公司",
     style: "circle",
@@ -227,8 +229,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">🏢 公司印章生成器</h1>
+          <div>
+            {session ? (
+              <div className="flex items-center gap-3">
+                {session.user?.image && <img src={session.user.image} alt="Avatar" className="w-8 h-8 rounded-full" />}
+                <span className="text-sm text-gray-600">{session.user?.name}</span>
+                <button onClick={() => signOut()} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">退出登录</button>
+              </div>
+            ) : (
+              <button onClick={() => signIn("google")} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">🔐 Google 登录</button>
+            )}
+          </div>
         </div>
       </header>
       <main className="max-w-7xl mx-auto px-4 py-6">
