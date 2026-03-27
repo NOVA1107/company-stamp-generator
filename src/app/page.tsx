@@ -26,7 +26,7 @@ interface StampPosition {
 }
 
 export default function Home() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [config, setConfig] = useState<StampConfig>({
     companyName: "示例公司",
     style: "circle",
@@ -182,6 +182,41 @@ export default function Home() {
     setPreviewUrl(url);
   };
 
+  const handleDownloadWithCredits = async (downloadFn: () => Promise<void>, configData: any) => {
+    // 如果未登录，直接下载（预览模式）
+    if (!session?.user?.id) {
+      await downloadFn()
+      return
+    }
+    
+    try {
+      const response = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: configData })
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok) {
+        alert(result.error || '下载失败')
+        return
+      }
+      
+      // 扣费成功，执行下载
+      await downloadFn()
+      
+      // 更新 session 中的 credits
+      await updateSession()
+      
+      // 显示剩余额度
+      alert(`下载成功！剩余额度: ${result.remainingCredits}`)
+    } catch (error) {
+      console.error('下载API错误:', error)
+      alert('服务器错误，请重试')
+    }
+  }
+
   const downloadPNG = async () => {
     if (!stampRef.current) return;
     const canvas = await html2canvas(stampRef.current, { backgroundColor: null, scale: 2 });
@@ -236,6 +271,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 {session.user?.image && <img src={session.user.image} alt="Avatar" className="w-8 h-8 rounded-full" />}
                 <span className="text-sm text-gray-600">{session.user?.name}</span>
+                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">额度: {session.user?.credits ?? 0}</span>
                 <button onClick={() => signOut()} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">退出登录</button>
               </div>
             ) : (
@@ -298,7 +334,7 @@ export default function Home() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">副标题/编号（可选）</label>
                   <input type="text" value={config.subtitle} onChange={(e) => setConfig({ ...config, subtitle: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="如：合同专用章" />
                 </div>
-                <button onClick={downloadPNG} className="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">📥 下载 PNG 印章</button>
+                <button onClick={() => handleDownloadWithCredits(downloadPNG, config)} className="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">📥 下载 PNG 印章</button>
               </div>
             </div>
             <div className="bg-white rounded-xl shadow-sm p-6">
@@ -327,7 +363,7 @@ export default function Home() {
                 <div><label className="block text-xs text-gray-500 mb-1">旋转: {stampPosition.rotation}°</label><input type="range" min={-180} max={180} value={stampPosition.rotation} onChange={(e) => setStampPosition({ ...stampPosition, rotation: Number(e.target.value) })} className="w-full" /></div>
                 <div><label className="block text-xs text-gray-500 mb-1">透明度: {Math.round(stampPosition.opacity * 100)}%</label><input type="range" min={20} max={100} value={stampPosition.opacity * 100} onChange={(e) => setStampPosition({ ...stampPosition, opacity: Number(e.target.value) / 100 })} className="w-full" /></div>
               </div>
-              <button onClick={exportPDF} disabled={!previewUrl} className="w-full mt-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed">📥 导出 PDF</button>
+              <button onClick={() => handleDownloadWithCredits(exportPDF, { ...config, stampPosition })} disabled={!previewUrl} className="w-full mt-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed">📥 导出 PDF</button>
             </div>
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-lg font-semibold mb-4">👁️ 文档预览</h2>
