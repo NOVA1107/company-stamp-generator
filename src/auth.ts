@@ -18,9 +18,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       
       if (!existingProfile) {
         // 真正的新用户：创建并赠送 3 额度
-        const newId = user.id // 使用 NextAuth 生成的 id
         await supabase.from('profiles').insert({
-          id: newId,
+          id: user.id,
           email: user.email,
           avatar_url: user.image,
           credits: 3
@@ -42,8 +41,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     
     async jwt({ token, user }) {
-      // 🔑 关键：在 JWT 阶段根据 email 查出 profile id 并存入 token
-      if (user?.email) {
+      // 🔑 只有在首次登录的瞬间 user 才有值，刷新页面时是 undefined！
+      if (user) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('id, credits')
@@ -59,10 +58,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     
     async session({ session, token }) {
-      // 将 token 中的 id 和 credits 传给 session
-      if (session.user) {
+      // 安全地把 token.id 传给 session
+      if (session.user && token.id) {
         session.user.id = token.id as string
-        session.user.credits = token.credits as number
       }
       return session
     }
