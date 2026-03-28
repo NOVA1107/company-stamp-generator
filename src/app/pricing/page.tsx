@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSession, signIn } from "next-auth/react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 const PAYPAL_CLIENT_ID = "ATB5MF_H8sqZRyYAyX1fEFywA7QlS45XQO_kWIYKmBhb1clFwHkwcAyw02EDueccnIrEiEBwUSK8Nc09";
@@ -11,28 +12,34 @@ const plans = [
     id: "starter",
     name: "Starter",
     price: "4.99",
-    credits: 5,
+    credits: 20,
     description: "应急使用的临时客户",
-    features: ["5 次印章下载", "高清无水印", "PDF 文档合成"],
+    features: ["20 次印章下载", "高清无水印", "PDF 文档合成"],
     recommended: false,
   },
   {
     id: "pro",
     name: "Pro",
     price: "14.99",
-    credits: 50,
+    credits: 100,
     description: "企业用户的最佳选择",
-    features: ["50 次印章下载", "高清无水印", "PDF 文档合成", "企业级品质保障"],
+    features: ["100 次印章下载", "高清无水印", "PDF 文档合成", "企业级品质保障"],
     recommended: true,
   },
 ];
 
 export default function Pricing() {
+  const { data: session } = useSession();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [showPayPal, setShowPayPal] = useState(false);
   const [orderCreated, setOrderCreated] = useState(false);
 
   const handlePlanSelect = (planId: string) => {
+    // 未登录先提示
+    if (!session?.user?.id) {
+      alert("请先登录后再购买额度");
+      return;
+    }
     setSelectedPlan(planId);
     setShowPayPal(true);
     setOrderCreated(false);
@@ -40,7 +47,15 @@ export default function Pricing() {
 
   const createOrder = (data: any, actions: any) => {
     const plan = plans.find((p) => p.id === selectedPlan);
-    if (!plan) return;
+    if (!plan || !session?.user?.id) return;
+
+    // 将用户 ID 塞入 custom_id，用于Webhook识别
+    const customData = {
+      userId: session.user.id,
+      email: session.user.email,
+      planId: plan.id,
+      credits: plan.credits
+    };
 
     return actions.order.create({
       purchase_units: [
@@ -50,7 +65,7 @@ export default function Pricing() {
             currency_code: "USD",
             value: plan.price,
           },
-          custom_id: JSON.stringify({ planId: plan.id, credits: plan.credits }),
+          custom_id: JSON.stringify(customData),  // 用户身份+套餐信息
         },
       ],
     });
@@ -62,6 +77,8 @@ export default function Pricing() {
     alert("支付成功！额度将自动添加到您的账户。");
     setShowPayPal(false);
     setSelectedPlan(null);
+    // 刷新页面以更新额度显示
+    window.location.reload();
   };
 
   return (
