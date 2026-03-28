@@ -12,7 +12,7 @@ if (!supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey || '');
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
     console.log('收到 Webhook:', body.event_type);
