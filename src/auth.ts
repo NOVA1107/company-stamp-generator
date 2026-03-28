@@ -14,7 +14,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         .from('profiles')
         .select('id, credits')
         .eq('email', user.email)
-        .single()
+        .limit(1)
+        .maybeSingle()
       
       if (!existingProfile) {
         // 真正的新用户：创建并赠送 3 额度
@@ -47,7 +48,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .from('profiles')
           .select('id, credits')
           .eq('email', user.email)
-          .single()
+          .limit(1)
+          .maybeSingle()
         
         if (profile) {
           token.id = profile.id
