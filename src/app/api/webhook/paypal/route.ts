@@ -12,6 +12,10 @@ if (!supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey || '');
 
+export async function GET() {
+  return new Response('Webhook is alive');
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
