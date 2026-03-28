@@ -9,21 +9,29 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user }) {
       if (!user.email) return false
       
-      // 检查用户是否已存在
-      const { data: existingUser } = await supabase
+      // 先查询用户是否存在以及现有额度
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, credits')
         .eq('id', user.id)
         .single()
       
-      // 如果不存在，则创建新用户，初始赠送 1 个 credit
-      if (!existingUser) {
+      if (!existingProfile) {
+        // 全新用户：创建并赠送 3 个 credit
         await supabase.from('profiles').insert({
           id: user.id,
           email: user.email,
           avatar_url: user.image,
-          credits: 3  // 新用户赠送 3 个免费额度
+          credits: 3
         })
+        console.log('🆕 新用户注册，赠送 3 额度:', user.id)
+      } else {
+        // 老用户：只更新最后登录时间，不动 credits
+        await supabase
+          .from('profiles')
+          .update({ updated_at: new Date().toISOString() })
+          .eq('id', user.id)
+        console.log('👋 老用户登录，额度保持不变:', user.id, '现有额度:', existingProfile.credits)
       }
       
       return true
