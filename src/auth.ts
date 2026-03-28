@@ -9,46 +9,48 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async signIn({ user }) {
       if (!user.email) return false
       
-      // 先查询用户是否存在以及现有额度
+      // 🔑 核心：以 Email 为唯一凭证查询
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id, credits')
-        .eq('id', user.id)
+        .eq('email', user.email)
         .single()
       
       if (!existingProfile) {
-        // 全新用户：创建并赠送 3 个 credit
+        // 真正的新用户（该邮箱第一次登录）：创建并赠送 3 额度
         await supabase.from('profiles').insert({
-          id: user.id,
+          id: user.id,  // 使用 NextAuth 生成的 id
           email: user.email,
           avatar_url: user.image,
           credits: 3
         })
-        console.log('🆕 新用户注册，赠送 3 额度:', user.id)
+        console.log('🆕 新用户注册（按 Email），赠送 3 额度:', user.email)
       } else {
-        // 老用户：只更新最后登录时间，不动 credits
+        // 老用户：更新信息，用旧的 profile id
+        // 注意：不再更新 user.id，因为我们要以 email 为准
         await supabase
           .from('profiles')
-          .update({ updated_at: new Date().toISOString() })
-          .eq('id', user.id)
-        console.log('👋 老用户登录，额度保持不变:', user.id, '现有额度:', existingProfile.credits)
+          .update({ 
+            avatar_url: user.image,
+            updated_at: new Date().toISOString() 
+          })
+          .eq('email', user.email)
+        console.log('👋 老用户登录（按 Email），额度保持:', existingProfile.credits)
       }
       
       return true
     },
     async session({ session, token }) {
-      // 将用户 ID 添加到 session 中
-      if (session.user && token.sub) {
-        session.user.id = token.sub
-        
-        // 获取最新的 credits 数量
+      // 以 Email 为准获取用户信息
+      if (session.user && session.user.email) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('credits')
-          .eq('id', token.sub)
+          .select('id, credits')
+          .eq('email', session.user.email)
           .single()
         
         if (profile) {
+          session.user.id = profile.id
           session.user.credits = profile.credits
         }
       }
