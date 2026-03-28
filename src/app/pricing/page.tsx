@@ -29,7 +29,7 @@ const plans = [
 ];
 
 export default function Pricing() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [showPayPal, setShowPayPal] = useState(false);
   const [orderCreated, setOrderCreated] = useState(false);
@@ -74,11 +74,15 @@ export default function Pricing() {
   const onApprove = async (data: any, actions: any) => {
     const details = await actions.order.capture();
     console.log("Payment captured:", details);
-    alert("支付成功！额度将自动添加到您的账户。");
+    
+    // 弹窗提示支付成功
+    alert("🎉 支付成功！额度已自动添加到您的账户。");
+    
     setShowPayPal(false);
     setSelectedPlan(null);
-    // 刷新页面以更新额度显示
-    window.location.reload();
+    
+    // 自动重新获取用户最新额度
+    await updateSession();
   };
 
   return (

@@ -81,16 +81,14 @@ export async function POST(req: Request) {
       console.log('✅ 加钱成功! 用户', userId, '新额度:', newCredits);
     }
 
-    // 3. 记录订单（不做任何UNIQUE校验）
+    // 3. 记录订单（修正字段名）
     const { error: orderError } = await supabase
       .from('orders')
       .insert({
-        order_id: resource.id || 'unknown',
-        status: 'success',
-        amount: resource.amount?.value || resource.purchase_units?.[0]?.amount?.value || '0',
-        currency: resource.amount?.currency_code || 'USD',
-        payer_email: resource.payer?.email_address || '',
-        raw_data: JSON.stringify(customData)
+        paypal_order_id: resource.id || 'unknown',
+        plan_id: customData.planId || 'starter',
+        amount: resource.amount?.value || resource.purchase_units?.[0]?.amount?.value || customData.credits * 0.25 || '4.99',
+        status: 'success'
       });
 
     if (orderError) {
