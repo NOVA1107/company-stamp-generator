@@ -22,7 +22,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           id: user.id,
           email: user.email,
           avatar_url: user.image,
-          credits: 1  // 新用户赠送 1 个免费额度
+          credits: 3  // 新用户赠送 3 个免费额度
         })
       }
       
