@@ -28,6 +28,7 @@ interface StampPosition {
 
 export default function Home() {
   const { data: session, update: updateSession } = useSession();
+  const [credits, setCredits] = useState<number>(0);
   const [config, setConfig] = useState<StampConfig>({
     companyName: "示例公司",
     style: "circle",
@@ -183,6 +184,23 @@ export default function Home() {
     setPreviewUrl(url);
   };
 
+  // 实时获取用户额度
+  useEffect(() => {
+    const fetchCredits = async () => {
+      if (!session?.user?.email) return;
+      try {
+        const res = await fetch('/api/user/credits');
+        const data = await res.json();
+        if (data.credits !== undefined) {
+          setCredits(data.credits);
+        }
+      } catch (err) {
+        console.error('获取额度失败:', err);
+      }
+    };
+    fetchCredits();
+  }, [session?.user?.email]);
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalError, setModalError] = useState('');
 
@@ -217,11 +235,15 @@ export default function Home() {
       // 扣费成功，执行下载
       await downloadFn()
       
-      // 更新 session 中的 credits
-      await updateSession()
+      // 实时刷新额度
+      const res = await fetch('/api/user/credits');
+      const data = await res.json();
+      if (data.credits !== undefined) {
+        setCredits(data.credits);
+      }
       
       // 显示剩余额度
-      alert(`下载成功！剩余额度: ${result.remainingCredits}`)
+      alert(`下载成功！剩余额度: ${data.credits}`)
     } catch (error) {
       console.error('下载API错误:', error)
       alert('服务器错误，请重试')
@@ -282,7 +304,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 {session.user?.image && <img src={session.user.image} alt="Avatar" className="w-8 h-8 rounded-full" />}
                 <span className="text-sm text-gray-600">{session.user?.name}</span>
-                <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm rounded-lg font-bold shadow">✨ 剩余额度: {session.user?.credits ?? 0} 次</span>
+                <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm rounded-lg font-bold shadow">✨ 剩余额度: {credits} 次</span>
                 <Link href="/pricing" className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-medium">充值</Link>
                 <button onClick={() => signOut()} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">退出登录</button>
               </div>
