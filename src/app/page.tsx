@@ -272,13 +272,13 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 {session.user?.image && <img src={session.user.image} alt="Avatar" className="w-8 h-8 rounded-full" />}
                 <span className="text-sm text-gray-600">{session.user?.name}</span>
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">额度: {session.user?.credits ?? 0}</span>
+                <span className="px-3 py-1.5 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-sm rounded-lg font-bold shadow">✨ 剩余额度: {session.user?.credits ?? 0} 次</span>
                 <Link href="/pricing" className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-medium">充值</Link>
                 <button onClick={() => signOut()} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm">退出登录</button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <button onClick={() => signIn("google")} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">🔐 Google 登录</button>
+                <button onClick={() => signIn("google")} className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg hover:from-yellow-500 hover:to-orange-600 transition text-sm font-medium shadow-md animate-pulse">🎁 登录免费领取 3 次额度</button>
               </div>
             )}
           </div>
