@@ -183,6 +183,9 @@ export default function Home() {
     setPreviewUrl(url);
   };
 
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [modalError, setModalError] = useState('');
+
   const handleDownloadWithCredits = async (downloadFn: () => Promise<void>, configData: any) => {
     // 如果未登录，直接下载（预览模式）
     if (!session?.user?.id) {
@@ -198,6 +201,13 @@ export default function Home() {
       })
       
       const result = await response.json()
+      
+      // 额度用完，弹出付费弹窗
+      if (response.status === 402 || result.needPayment) {
+        setModalError(result.error || '额度已用完')
+        setShowPaymentModal(true)
+        return
+      }
       
       if (!response.ok) {
         alert(result.error || '下载失败')
@@ -383,6 +393,36 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* 额度用完付费弹窗 */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
+            <div className="text-center">
+              <div className="text-5xl mb-4">💳</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">额度已用完</h3>
+              <p className="text-gray-600 mb-6">{modalError}</p>
+              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-4 mb-6">
+                <div className="text-3xl font-bold text-white mb-1">$4.99</div>
+                <div className="text-white/80 text-sm">20 次额度</div>
+              </div>
+              <Link 
+                href="/pricing"
+                onClick={() => setShowPaymentModal(false)}
+                className="block w-full py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-medium hover:from-red-700 hover:to-red-800 transition mb-3"
+              >
+                立即充值
+              </Link>
+              <button 
+                onClick={() => setShowPaymentModal(false)}
+                className="w-full py-2 text-gray-500 hover:text-gray-700 transition text-sm"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pricing CTA Section */}
       <section className="max-w-7xl mx-auto px-4 py-12 border-t bg-white">

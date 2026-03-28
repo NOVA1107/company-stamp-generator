@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
     // 检查额度是否充足
     if (!profile || profile.credits <= 0) {
       return NextResponse.json(
-        { error: "额度不足，请购买额度包后继续" },
-        { status: 403 }
+        { error: "额度已用完，请充值", needPayment: true },
+        { status: 402 }
       )
     }
     
