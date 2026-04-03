@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@next/third-parties": "^16.2.2",
     "@paypal/react-paypal-js": "^9.1.0",
     "@supabase/supabase-js": "^2.100.1",
     "html2canvas": "1.4.1",
