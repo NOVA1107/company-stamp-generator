@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Free Digital Company Stamp Generator | Create Custom Seals Online",
   description: "Generate high-quality digital company stamps, seals, and logos instantly. No Photoshop needed. Support 4K download.",
   keywords: "Company stamp, digital seal generator, online stamp maker",
+  verification: {
+    google: "R4xAzVVbEO_kwRfVNahsC9ZREmggwZnWv9pBGwIhPu8",
+  },
 };
 
 export default function RootLayout({
